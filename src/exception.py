@@ -4,7 +4,7 @@ This allows us to create specific error types that can be caught and handled sep
 Here's an example of how to define a custom exception:
 '''
 import sys
-import logging
+from src.logger import logging
 
 def error_message_detail(error, error_detail: sys):
     _, _, exc_tb = error_detail.exc_info() # detail regarding the error
