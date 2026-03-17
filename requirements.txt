@@ -4,4 +4,6 @@ numpy
 flask
 seaborn
 matplotlib
--e .
+catboost
+xgboost
+#-e .
