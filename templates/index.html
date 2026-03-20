@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Student Score Predictor{% endblock %}
+
+{% block head %}
+    <style>
+        :root {
+            --ink: #10231c;
+            --forest: #1c4f3b;
+            --mint: #d6eadf;
+            --paper: #f7f2e8;
+            --accent: #d9822b;
+            --panel: rgba(255, 255, 255, 0.78);
+            --shadow: 0 24px 60px rgba(16, 35, 28, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(217, 130, 43, 0.25), transparent 30%),
+                linear-gradient(135deg, #eef4ee 0%, var(--paper) 50%, #e4efe8 100%);
+        }
+
+        .page {
+            width: min(1100px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 48px 0 64px;
+        }
+
+        .hero {
+            display: grid;
+            gap: 24px;
+            align-items: center;
+            grid-template-columns: 1.2fr 0.8fr;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid rgba(16, 35, 28, 0.08);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        .intro {
+            padding: 40px;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 18px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--mint);
+            color: var(--forest);
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: clamp(2.4rem, 5vw, 4.6rem);
+            line-height: 0.96;
+        }
+
+        p {
+            margin: 0 0 20px;
+            font-size: 1.08rem;
+            line-height: 1.7;
+            max-width: 60ch;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(28, 79, 59, 0.16);
+        }
+
+        .button-primary {
+            color: white;
+            background: linear-gradient(135deg, var(--forest), #2c6c53);
+        }
+
+        .button-secondary {
+            color: var(--forest);
+            background: white;
+            border: 1px solid rgba(28, 79, 59, 0.18);
+        }
+
+        .button-danger {
+            color: white;
+            background: linear-gradient(135deg, #9a3f27, #c25b3b);
+            border: 0;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .stats {
+            display: grid;
+            gap: 16px;
+            padding: 28px;
+        }
+
+        .stat-card {
+            padding: 22px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(214, 234, 223, 0.55));
+            border: 1px solid rgba(16, 35, 28, 0.08);
+        }
+
+        .stat-label {
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(16, 35, 28, 0.7);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-copy {
+            margin-top: 8px;
+            color: rgba(16, 35, 28, 0.8);
+        }
+
+        @media (max-width: 840px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <main class="page">
+        <section class="hero">
+            <article class="panel intro">
+                <span class="eyebrow">Student Performance App</span>
+                <h1>Estimate a maths score from the rest of a student profile.</h1>
+                <p>
+                    This interface uses your trained preprocessing pipeline and regression model to predict
+                    a student's likely maths score from demographic and exam-context inputs.
+                </p>
+                <p>
+                    The form uses the exact feature schema expected by your saved artifacts, so it is a
+                    practical frontend for validating the full inference flow.
+                </p>
+                <div class="actions">
+                    <a class="button button-primary" href="{{ url_for('predict_datapoint') }}">Open Predictor</a>
+                    <a class="button button-secondary" href="https://flask.palletsprojects.com/" target="_blank" rel="noreferrer">Flask Docs</a>
+                    <form action="{{ url_for('shutdown') }}" method="post" onsubmit="return confirm('Shut down the application?');">
+                        <button class="button button-danger" type="submit">Exit Application</button>
+                    </form>
+                </div>
+            </article>
+
+            <aside class="panel stats">
+                <div class="stat-card">
+                    <div class="stat-label">Input Shape</div>
+                    <div class="stat-value">7 Features</div>
+                    <div class="stat-copy">The form mirrors the columns used by your saved preprocessor.</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Prediction Target</div>
+                    <div class="stat-value">Math Score</div>
+                    <div class="stat-copy">Reading and writing scores help drive the final estimate.</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Artifacts</div>
+                    <div class="stat-value">Live</div>
+                    <div class="stat-copy">The app loads `preprocessor.pkl` and `model.pkl` from `artifacts/`.</div>
+                </div>
+            </aside>
+        </section>
+    </main>
+{% endblock %}

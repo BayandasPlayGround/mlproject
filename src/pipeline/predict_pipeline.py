@@ -26,6 +26,15 @@ class PredictPipeline:
             transformed_features = preprocessor.transform(features)
             return model.predict(transformed_features)
         except Exception as e:
+            if "_fill_dtype" in str(e):
+                raise CustomException(
+                    RuntimeError(
+                        "Saved artifacts are incompatible with the current scikit-learn version. "
+                        "Regenerate them by running 'python src\\components\\data_ingestion.py' "
+                        "in the active virtual environment."
+                    ),
+                    sys,
+                )
             raise CustomException(e, sys)
 
 
