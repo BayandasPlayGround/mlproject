@@ -1,6 +1,7 @@
 """Load persisted artifacts and generate predictions for new inputs."""
 import os
 import sys
+import threading
 from dataclasses import dataclass
 
 import pandas as pd
@@ -12,6 +13,28 @@ from src.utils import load_object
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MODEL_PATH = os.path.join(PROJECT_ROOT, "artifacts", "model.pkl")
 PREPROCESSOR_PATH = os.path.join(PROJECT_ROOT, "artifacts", "preprocessor.pkl")
+ARTIFACT_LOCK = threading.Lock()
+
+
+def ensure_prediction_artifacts():
+    """Build the saved model artifacts if they are missing in the runtime environment."""
+    if os.path.exists(MODEL_PATH) and os.path.exists(PREPROCESSOR_PATH):
+        return
+
+    with ARTIFACT_LOCK:
+        if os.path.exists(MODEL_PATH) and os.path.exists(PREPROCESSOR_PATH):
+            return
+
+        logging.info("Prediction artifacts not found. Regenerating them in the active environment.")
+
+        from src.components.data_ingestion import DataIngestion
+        from src.components.data_transformation import DataTransformation
+        from src.components.model_trainer import ModelTrainer
+
+        train_path, test_path = DataIngestion().initiate_data_ingestion()
+        train_arr, test_arr, _ = DataTransformation().initiate_data_transformation(train_path, test_path)
+        score = ModelTrainer().initiate_model_trainer(train_arr, test_arr)
+        logging.info("Prediction artifacts regenerated successfully. Test R2 score: %.4f", score)
 
 
 class PredictPipeline:
@@ -19,6 +42,7 @@ class PredictPipeline:
 
     def predict(self, features):
         try:
+            ensure_prediction_artifacts()
             logging.info("Loading prediction artifacts")
             model = load_object(file_path=MODEL_PATH)
             preprocessor = load_object(file_path=PREPROCESSOR_PATH)
