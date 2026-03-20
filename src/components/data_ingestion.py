@@ -55,12 +55,17 @@ class DataIngestion:
 
 def main():
     from src.components.data_transformation import DataTransformation
+    from src.components.model_trainer import ModelTrainer
 
     ingestion = DataIngestion()
     train_data, test_data = ingestion.initiate_data_ingestion()
 
     data_transformation = DataTransformation()
-    data_transformation.initiate_data_transformation(train_data, test_data)
+    train_arr, test_arr, _ = data_transformation.initiate_data_transformation(train_data, test_data)
+
+    model_trainer = ModelTrainer()
+    r2_score = model_trainer.initiate_model_trainer(train_arr, test_arr)
+    print(f"Training completed. Test R2 score: {r2_score:.4f}")
 
 
 if __name__ == "__main__":
