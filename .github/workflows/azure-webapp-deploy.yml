@@ -9,8 +9,6 @@ permissions:
 env:
   PYTHON_VERSION: "3.13"
   AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
-  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-  ACR_NAME: slimtestdocker
   ACR_LOGIN_SERVER: slimtestdocker.azurecr.io
   IMAGE_REPOSITORY: studentperformance1
 
@@ -41,14 +39,12 @@ jobs:
           test -f artifacts/model.pkl
           test -f artifacts/preprocessor.pkl
 
-      - name: Log in to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Log in to Azure Container Registry
+        env:
+          REGISTRY_USERNAME: ${{ secrets.ACR_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.ACR_PASSWORD }}
         run: |
-          az acr login --name ${{ env.ACR_NAME }}
+          echo "$REGISTRY_PASSWORD" | docker login "${{ env.ACR_LOGIN_SERVER }}" --username "$REGISTRY_USERNAME" --password-stdin
 
       - name: Build container image
         env:
@@ -81,8 +77,11 @@ jobs:
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
-      - name: Restart Azure Web App
-        run: |
-          az webapp restart \
-            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ env.AZURE_WEBAPP_NAME }}"
+      - name: Deploy image to Azure Web App
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}

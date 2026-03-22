@@ -504,33 +504,35 @@ What the workflow does:
 1. checks out the repository
 2. installs Python dependencies
 3. runs `python src/components/data_ingestion.py` so model artifacts are generated before image build
-4. logs into Azure with `azure/login`
-5. logs into Azure Container Registry
-6. builds the container image
-7. smoke-tests the image by calling `/health`
-8. pushes the image to ACR
-9. restarts the Azure Web App
-
-Why the workflow only restarts the app:
-
-- the Web App is already configured in Azure to use the container image from ACR
-- the workflow does not need to reconfigure the Web App on every run
-- once the new image is pushed, restarting the Web App is enough to make Azure pull the updated image
+4. logs into Azure Container Registry with registry credentials
+5. builds the container image
+6. smoke-tests the image by calling `/health`
+7. pushes the image to ACR
+8. deploys the pushed image to Azure Web App by using the app publish profile
 
 Required GitHub configuration:
 
-- secret: `AZURE_CREDENTIALS`
+- secret: `AZURE_WEBAPP_PUBLISH_PROFILE`
+- secret: `ACR_USERNAME`
+- secret: `ACR_PASSWORD`
 - variable: `AZURE_WEBAPP_NAME`
-- variable: `AZURE_RESOURCE_GROUP`
 
-Create `AZURE_CREDENTIALS` with Azure CLI:
+How to get those values from the Azure portal:
 
-```powershell
-az login
-az ad sp create-for-rbac --role contributor --scopes /subscriptions/<subscription-id>/resourceGroups/<resource-group-name> --json-auth
-```
+1. Open the target Azure Web App.
+2. On `Overview`, select `Get publish profile` and download the file.
+3. Create the GitHub secret `AZURE_WEBAPP_PUBLISH_PROFILE` using the full contents of that downloaded file.
+4. Open the Azure Container Registry.
+5. Go to `Access keys`.
+6. Enable `Admin user` if it is disabled.
+7. Copy the username into GitHub secret `ACR_USERNAME`.
+8. Copy one of the passwords into GitHub secret `ACR_PASSWORD`.
+9. Create the GitHub variable `AZURE_WEBAPP_NAME` with your Web App name.
 
-Paste the full JSON output into the GitHub secret named `AZURE_CREDENTIALS`.
+Important for Linux Web Apps:
+
+- if `Get publish profile` fails, add the app setting `WEBSITE_WEBDEPLOY_USE_SCM=true` in the Azure portal and try again
+- if you do not have access to Microsoft Entra ID, this publish-profile path is usually the simplest way to let GitHub deploy the app
 
 That means GitHub will not deploy automatically on every push. To run it:
 
@@ -546,6 +548,7 @@ Recommended one-time Azure checks:
 - confirm the app is able to pull from ACR
 - confirm the container port setting is correct for your app
 - if you enabled ACR continuous deployment in Azure Deployment Center, disable it so GitHub Actions remains the single deployment driver
+- confirm the publish profile you downloaded belongs to the same Web App named in `AZURE_WEBAPP_NAME`
 
 ## User Behavior And Sessions
 
