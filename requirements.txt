@@ -2,8 +2,5 @@ pandas
 scikit-learn==1.8.0
 numpy
 flask
-seaborn
-matplotlib
-catboost
-xgboost
+gunicorn
 #-e .

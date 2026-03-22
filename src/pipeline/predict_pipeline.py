@@ -16,10 +16,26 @@ PREPROCESSOR_PATH = os.path.join(PROJECT_ROOT, "artifacts", "preprocessor.pkl")
 ARTIFACT_LOCK = threading.Lock()
 
 
+def allow_artifact_rebuild():
+    raw_value = os.getenv("ALLOW_ARTIFACT_REBUILD", "1").strip().lower()
+    return raw_value not in {"0", "false", "no"}
+
+
 def ensure_prediction_artifacts():
     """Build the saved model artifacts if they are missing in the runtime environment."""
     if os.path.exists(MODEL_PATH) and os.path.exists(PREPROCESSOR_PATH):
         return
+
+    if not allow_artifact_rebuild():
+        missing_files = [
+            path
+            for path in (MODEL_PATH, PREPROCESSOR_PATH)
+            if not os.path.exists(path)
+        ]
+        raise RuntimeError(
+            "Prediction artifacts are missing and automatic rebuild is disabled. "
+            f"Missing files: {missing_files}"
+        )
 
     with ARTIFACT_LOCK:
         if os.path.exists(MODEL_PATH) and os.path.exists(PREPROCESSOR_PATH):

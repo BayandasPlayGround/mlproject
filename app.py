@@ -9,6 +9,7 @@ from src.pipeline.predict_pipeline import CustomData, PredictPipeline
 application = Flask(__name__)
 app = application
 LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost", None}
+DEFAULT_PORT = 5000
 
 SELECT_FIELDS = [
     {
@@ -84,6 +85,25 @@ SCORE_FIELDS = [
 ]
 
 
+def get_runtime_port():
+    raw_port = os.getenv("PORT") or os.getenv("WEBSITES_PORT") or str(DEFAULT_PORT)
+
+    try:
+        return int(raw_port)
+    except ValueError:
+        return DEFAULT_PORT
+
+
+def allow_local_shutdown():
+    host = request.host.split(":", 1)[0] if request.host else None
+    return request.remote_addr in LOCAL_HOSTS or host in LOCAL_HOSTS
+
+
+@app.context_processor
+def inject_template_flags():
+    return {"allow_shutdown": allow_local_shutdown()}
+
+
 def render_prediction_page(
     *,
     results=None,
@@ -157,6 +177,11 @@ def index():
     return render_template("index.html")
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}, 200
+
+
 @app.route("/predictdata", methods=["GET", "POST"])
 def predict_datapoint():
     if request.method == "GET":
@@ -206,7 +231,7 @@ def predict_datapoint():
 
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
-    if request.remote_addr not in LOCAL_HOSTS:
+    if not allow_local_shutdown():
         abort(403)
 
     if not app.testing:
@@ -216,5 +241,5 @@ def shutdown():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=get_runtime_port())
 

@@ -256,9 +256,11 @@
             <div class="brand">Student Score Predictor</div>
             <div class="topbar-actions">
                 <a class="back-link" href="{{ url_for('index') }}">Back to landing page</a>
+                {% if allow_shutdown %}
                 <form action="{{ url_for('shutdown') }}" method="post" onsubmit="return confirm('Shut down the application?');">
                     <button class="exit-button" type="submit">Exit Application</button>
                 </form>
+                {% endif %}
             </div>
         </div>
 

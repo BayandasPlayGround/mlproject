@@ -2,7 +2,6 @@ import os
 import sys
 from dataclasses import dataclass
 
-from catboost import CatBoostRegressor
 from sklearn.ensemble import (
     AdaBoostRegressor,
     GradientBoostingRegressor,
@@ -11,7 +10,6 @@ from sklearn.ensemble import (
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.tree import DecisionTreeRegressor
-from xgboost import XGBRegressor
 
 from src.exception import CustomException
 from src.logger import logging
@@ -32,15 +30,6 @@ MODEL_PARAMS = {
         "n_estimators": [8, 16, 32, 64, 128, 256],
     },
     "Linear Regression": {},
-    "XGBRegressor": {
-        "learning_rate": [0.1, 0.01, 0.05, 0.001],
-        "n_estimators": [8, 16, 32, 64, 128, 256],
-    },
-    "CatBoosting Regressor": {
-        "depth": [6, 8, 10],
-        "learning_rate": [0.01, 0.05, 0.1],
-        "iterations": [30, 50, 100],
-    },
     "AdaBoost Regressor": {
         "learning_rate": [0.1, 0.01, 0.5, 0.001],
         "n_estimators": [8, 16, 32, 64, 128, 256],
@@ -64,8 +53,6 @@ class ModelTrainer:
             "Decision Tree": DecisionTreeRegressor(),
             "Gradient Boosting": GradientBoostingRegressor(),
             "Linear Regression": LinearRegression(),
-            "XGBRegressor": XGBRegressor(),
-            "CatBoosting Regressor": CatBoostRegressor(verbose=False),
             "AdaBoost Regressor": AdaBoostRegressor(),
         }
 

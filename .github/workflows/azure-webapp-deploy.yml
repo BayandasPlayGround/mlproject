@@ -1,14 +1,18 @@
-name: Build And Deploy Flask App To Azure Web App
+name: Build And Deploy Container To Azure Web App
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
   PYTHON_VERSION: "3.13"
   AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  ACR_NAME: slimtestdocker
+  ACR_LOGIN_SERVER: slimtestdocker.azurecr.io
+  IMAGE_REPOSITORY: studentperformance1
 
 jobs:
   build-and-deploy:
@@ -37,9 +41,48 @@ jobs:
           test -f artifacts/model.pkl
           test -f artifacts/preprocessor.pkl
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Log in to Azure
+        uses: azure/login@v2
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build container image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_NAME=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_REPOSITORY }}
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .
+
+      - name: Smoke test container locally in CI
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_NAME=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_REPOSITORY }}
+          trap 'docker rm -f student-score-smoke >/dev/null 2>&1 || true' EXIT
+          docker run -d --name student-score-smoke -p 5000:5000 $IMAGE_NAME:$IMAGE_TAG
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:5000/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:5000/health
+          docker logs student-score-smoke
+
+      - name: Push container image to ACR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_NAME=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_REPOSITORY }}
+          docker push $IMAGE_NAME:$IMAGE_TAG
+          docker push $IMAGE_NAME:latest
+
+      - name: Restart Azure Web App
+        run: |
+          az webapp restart \
+            --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ env.AZURE_WEBAPP_NAME }}"

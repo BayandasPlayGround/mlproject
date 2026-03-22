@@ -176,9 +176,11 @@
                 <div class="actions">
                     <a class="button button-primary" href="{{ url_for('predict_datapoint') }}">Open Predictor</a>
                     <a class="button button-secondary" href="https://flask.palletsprojects.com/" target="_blank" rel="noreferrer">Flask Docs</a>
+                    {% if allow_shutdown %}
                     <form action="{{ url_for('shutdown') }}" method="post" onsubmit="return confirm('Shut down the application?');">
                         <button class="button button-danger" type="submit">Exit Application</button>
                     </form>
+                    {% endif %}
                 </div>
             </article>
 
