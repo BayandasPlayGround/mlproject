@@ -1,6 +1,6 @@
 # Student Exam Performance Predictor
 
-This project is an end-to-end machine learning application that predicts a student's `math_score` from the rest of the student profile.
+This demo project is an end-to-end machine learning application that predicts a student's `math_score` from the rest of the student profile.
 
 It includes:
 
