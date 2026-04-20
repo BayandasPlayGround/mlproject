@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-training.txt
 
       - name: Generate training artifacts for deployment
         run: |
@@ -36,6 +36,8 @@ jobs:
 
       - name: Verify deployment package contents
         run: |
+          test -f artifacts/model.onnx
+          test -f artifacts/model_metadata.json
           test -f artifacts/model.pkl
           test -f artifacts/preprocessor.pkl
 
@@ -67,6 +69,15 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:5000/health
+          curl -fsS -X POST http://127.0.0.1:5000/predictdata \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "gender=female" \
+            --data-urlencode "race_ethnicity=group B" \
+            --data-urlencode "parental_level_of_education=bachelor's degree" \
+            --data-urlencode "lunch=standard" \
+            --data-urlencode "test_preparation_course=none" \
+            --data-urlencode "reading_score=72" \
+            --data-urlencode "writing_score=74" >/dev/null
           docker logs student-score-smoke
 
       - name: Push container image to ACR

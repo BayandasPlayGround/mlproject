@@ -10,19 +10,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.exception import CustomException
+from src.features import CATEGORICAL_COLUMNS, NUMERICAL_COLUMNS, TARGET_COLUMN
 from src.logger import logging
 from src.utils import save_object
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-NUMERICAL_COLUMNS = ["writing_score", "reading_score"]
-CATEGORICAL_COLUMNS = [
-    "gender",
-    "race_ethnicity",
-    "parental_level_of_education",
-    "lunch",
-    "test_preparation_course",
-]
-TARGET_COLUMN = "math_score"
 
 
 @dataclass
@@ -46,7 +38,6 @@ class DataTransformation:
 
             cat_pipeline = Pipeline(
                 steps=[
-                    ("imputer", SimpleImputer(strategy="most_frequent")),
                     ("one_hot_encoder", OneHotEncoder(handle_unknown="ignore")),
                     ("scaler", StandardScaler(with_mean=False)),
                 ]

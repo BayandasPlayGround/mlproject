@@ -7,7 +7,8 @@ It includes:
 - data ingestion from the raw CSV dataset
 - preprocessing with a scikit-learn `ColumnTransformer`
 - model training and model selection
-- saved model and preprocessor artifacts
+- an exported ONNX inference artifact for serving
+- temporary pickle artifacts for parity checks and rollback
 - a Flask frontend for interactive predictions
 - optional containerization with Docker
 - optional deployment packaging for Azure
@@ -37,6 +38,8 @@ mlproject/
 |-- .dockerignore
 |-- README.md
 |-- requirements.txt
+|-- requirements-container.txt
+|-- requirements-training.txt
 |-- requirements-extras.txt
 |-- notebook/
 |   |-- data/stud.csv
@@ -47,10 +50,13 @@ mlproject/
 |   |-- train.csv
 |   |-- test.csv
 |   |-- preprocessor.pkl
-|   `-- model.pkl
+|   |-- model.pkl
+|   |-- model.onnx
+|   `-- model_metadata.json
 |-- logs/
 |-- src/
 |   |-- exception.py
+|   |-- features.py
 |   |-- logger.py
 |   |-- utils.py
 |   |-- components/
@@ -96,7 +102,7 @@ Responsibilities:
 - define numeric and categorical feature groups
 - build a scikit-learn preprocessing pipeline
 - apply median imputation and scaling to numeric features
-- apply most-frequent imputation, one-hot encoding, and scaling to categorical features
+- apply one-hot encoding and scaling to categorical features
 - fit preprocessing on the training split only
 - save the fitted preprocessor to `artifacts/preprocessor.pkl`
 
@@ -113,6 +119,8 @@ Responsibilities:
 - evaluate them with grid search where configured
 - choose the best model by `R-squared`
 - save the best model to `artifacts/model.pkl`
+- export the fitted preprocessing-plus-model pipeline to `artifacts/model.onnx`
+- save deployment metadata to `artifacts/model_metadata.json`
 
 ### 4. Prediction pipeline
 
@@ -122,10 +130,10 @@ File:
 
 Responsibilities:
 
-- load `artifacts/preprocessor.pkl`
-- load `artifacts/model.pkl`
-- transform incoming prediction data
+- load `artifacts/model.onnx` through ONNX Runtime by default
+- convert incoming prediction data into the ONNX input schema
 - return the predicted maths score
+- optionally use `MODEL_RUNTIME=pickle` to load `artifacts/preprocessor.pkl` and `artifacts/model.pkl`
 - rebuild artifacts automatically in local usage when they are missing
 
 ### 5. Flask frontend
@@ -174,9 +182,17 @@ venv\Scripts\activate
 
 ### 3. Install dependencies
 
+For serving the Flask app with the exported ONNX model:
+
 ```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+For training and ONNX export:
+
+```powershell
+pip install -r requirements-training.txt
 ```
 
 Optional notebook and experimentation dependencies:
@@ -195,7 +211,8 @@ This command:
 - creates the train and test splits
 - fits the preprocessing object
 - trains the model
-- writes the saved artifacts
+- exports the ONNX serving artifact
+- writes the temporary pickle fallback artifacts
 
 ```powershell
 python src\components\data_ingestion.py
@@ -221,12 +238,21 @@ http://127.0.0.1:5000
 
 ### Important artifact note
 
-If `artifacts/model.pkl` and `artifacts/preprocessor.pkl` do not exist, the prediction pipeline can regenerate them automatically in local usage. In the container image, automatic rebuild is disabled by default, so the image should already include the artifacts.
+`artifacts/model.onnx` is the default serving artifact. `artifacts/model.pkl` and `artifacts/preprocessor.pkl` are still generated as temporary fallback artifacts for parity checks and rollback.
+
+If `artifacts/model.onnx` does not exist, the prediction pipeline can regenerate artifacts automatically in local usage when training dependencies are installed. In the container image, automatic rebuild is disabled by default, so the image must already include `artifacts/model.onnx`.
 
 For the best local and container experience, generate artifacts ahead of time with:
 
 ```powershell
 python src\components\data_ingestion.py
+```
+
+To force the old pickle path during the transition:
+
+```powershell
+$env:MODEL_RUNTIME = "pickle"
+python app.py
 ```
 
 ## Testing
@@ -242,6 +268,8 @@ Confirm these files exist afterward:
 - `artifacts/data.csv`
 - `artifacts/train.csv`
 - `artifacts/test.csv`
+- `artifacts/model.onnx`
+- `artifacts/model_metadata.json`
 - `artifacts/preprocessor.pkl`
 - `artifacts/model.pkl`
 
@@ -372,7 +400,7 @@ python src\components\data_ingestion.py
 docker build -t student-score-predictor:latest .
 ```
 
-This bakes `model.pkl` and `preprocessor.pkl` into the image and avoids runtime retraining inside the container.
+This bakes `model.onnx` into the image and avoids runtime training or export inside the container. The pickle artifacts are included only as transitional fallback artifacts.
 
 ### 4. Verify the container health endpoint
 
@@ -409,7 +437,7 @@ docker stop student-score-app
 The changes that mattered most for reliable cloud deployment were:
 
 - keep the runtime image focused on prediction, not notebook-only experimentation dependencies
-- generate `model.pkl` and `preprocessor.pkl` before building the image
+- generate `model.onnx` before building the image
 - run the app with `gunicorn` instead of the Flask development server
 - expose a simple `/health` endpoint and test it locally and in CI
 - run the container as a non-root user
@@ -418,10 +446,10 @@ The changes that mattered most for reliable cloud deployment were:
 
 ## Practical Azure Implementation
 
-In practice, this project would usually run as an online prediction service behind a school, tutoring, analytics, or admin-facing web application. The deployable prediction bundle is the trained model plus the fitted preprocessing object:
+In practice, this project would usually run as an online prediction service behind a school, tutoring, analytics, or admin-facing web application. The deployable prediction bundle is the exported ONNX graph plus lightweight metadata:
 
-- `artifacts/model.pkl`
-- `artifacts/preprocessor.pkl`
+- `artifacts/model.onnx`
+- `artifacts/model_metadata.json`
 
 A common Azure shape is:
 
@@ -439,7 +467,7 @@ The request flow is typically:
 2. The frontend or backend collects the required student profile fields: gender, race or ethnicity group, parental education, lunch type, test preparation status, reading score, and writing score.
 3. The client sends those fields to the prediction service. In the current app, that happens through a form POST to `/predictdata`.
 4. The Flask route validates the request and converts the submitted values into the model's expected feature schema.
-5. `PredictPipeline` loads the active `preprocessor.pkl` and `model.pkl`, transforms the input row, generates the predicted `math_score`, and returns the result.
+5. `PredictPipeline` sends the inputs to ONNX Runtime, which executes the exported preprocessing and model graph and returns the predicted `math_score`.
 6. The client renders the prediction on the page or uses it inside a larger workflow, such as academic support triage, reporting, or intervention planning.
 7. The serving layer logs prediction failures, startup output, and request output so Azure logs can be used for troubleshooting and operational monitoring.
 
@@ -447,7 +475,7 @@ On Azure, the clean separation is usually:
 
 - website or dashboard: owns page rendering, authentication, and user session context
 - application backend: decides when predictions are needed and applies any business rules around who can request or view them
-- prediction service: owns preprocessing, model loading, validation, and score generation
+- prediction service: owns validation, ONNX Runtime loading, and score generation
 - storage and registry: keep trained artifacts, container images, metrics, and deployment lineage
 - monitoring jobs: compare live input distributions and prediction quality against the training reference data when later outcome data is available
 
@@ -545,11 +573,11 @@ Trigger:
 What the workflow does:
 
 1. checks out the repository
-2. installs Python dependencies
-3. runs `python src/components/data_ingestion.py` so model artifacts are generated before image build
+2. installs training and ONNX export dependencies
+3. runs `python src/components/data_ingestion.py` so `model.onnx` is generated before image build
 4. logs into Azure Container Registry with registry credentials
 5. builds the container image
-6. smoke-tests the image by calling `/health`
+6. smoke-tests the image by calling `/health` and posting a sample prediction request
 7. pushes the image to ACR
 8. deploys the pushed image to Azure Web App by using the app publish profile
 
@@ -634,20 +662,21 @@ python src\components\data_ingestion.py
 
 Most common causes:
 
-- `artifacts/model.pkl` is missing
-- `artifacts/preprocessor.pkl` is missing
+- `artifacts/model.onnx` is missing
+- `onnxruntime` is not installed in the serving environment
 - preprocessing changed but the saved artifacts were not retrained
-- the saved artifacts were created with a different scikit-learn version
+- `MODEL_RUNTIME=pickle` is set but `artifacts/model.pkl` or `artifacts/preprocessor.pkl` is missing
 
 Fix:
 
 ```powershell
+pip install -r requirements-training.txt
 python src\components\data_ingestion.py
 ```
 
 ### Scikit-learn version mismatch warning
 
-If pickled artifacts were created under a different scikit-learn version, retrain them in the active environment:
+This should only affect the temporary pickle fallback path. If pickled artifacts were created under a different scikit-learn version, retrain them in the active environment:
 
 ```powershell
 python src\components\data_ingestion.py
@@ -657,8 +686,8 @@ python src\components\data_ingestion.py
 
 Check:
 
-- the container image includes `artifacts/model.pkl`
-- the container image includes `artifacts/preprocessor.pkl`
+- the container image includes `artifacts/model.onnx`
+- the container installed `onnxruntime`
 - the Web App is still configured to use the correct image and tag
 - the running container can start correctly on the configured port
 
@@ -677,7 +706,7 @@ Then verify:
 - `gunicorn` is installed
 - the image can import `app:app`
 - the runtime user can read the application files
-- the image includes the saved prediction artifacts
+- the image includes `artifacts/model.onnx`
 
 ### Health check fails
 
@@ -697,11 +726,23 @@ http://127.0.0.1:5000/health
 
 Current dependencies from `requirements.txt`:
 
-- pandas
-- scikit-learn==1.8.0
 - numpy
 - flask
+- onnxruntime
+
+Container-only dependencies from `requirements-container.txt`:
+
 - gunicorn
+
+Training and ONNX export dependencies from `requirements-training.txt`:
+
+- numpy
+- pandas
+- scikit-learn==1.8.0
+- onnxruntime
+- onnx
+- skl2onnx
+- onnxmltools
 
 Optional extras from `requirements-extras.txt`:
 
