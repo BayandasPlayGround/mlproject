@@ -48,16 +48,9 @@ kaggle.json
 .ipynb_checkpoints/
 
 # ML training outputs
+artifacts/
 catboost_info/
 notebook/catboost_info/
-artifacts/train.csv
-artifacts/test.csv
-artifacts/*.pkl
-artifacts/*.joblib
-artifacts/*.sav
-artifacts/*.onnx
-artifacts/*.h5
-artifacts/*.keras
 *.pkl
 *.joblib
 *.sav
