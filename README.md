@@ -393,14 +393,13 @@ http://127.0.0.1:5000
 
 ### 3. Recommended container build flow
 
-Generate artifacts first, then build:
+Build the image directly; the Dockerfile now generates the ONNX artifact in a builder stage:
 
 ```powershell
-python src\components\data_ingestion.py
 docker build -t student-score-predictor:latest .
 ```
 
-This bakes `model.onnx` into the image and avoids runtime training or export inside the container. The pickle artifacts are included only as transitional fallback artifacts.
+If you want to validate the training/export path independently, run `python src\components\data_ingestion.py` first. The runtime image stays lean, while the build still bakes `model.onnx` into the image.
 
 ### 4. Verify the container health endpoint
 
@@ -437,7 +436,7 @@ docker stop student-score-app
 The changes that mattered most for reliable cloud deployment were:
 
 - keep the runtime image focused on prediction, not notebook-only experimentation dependencies
-- generate `model.onnx` before building the image
+- generate `model.onnx` during the image build or in the deployment workflow before packaging
 - run the app with `gunicorn` instead of the Flask development server
 - expose a simple `/health` endpoint and test it locally and in CI
 - run the container as a non-root user
@@ -574,7 +573,7 @@ What the workflow does:
 
 1. checks out the repository
 2. installs training and ONNX export dependencies
-3. runs `python src/components/data_ingestion.py` so `model.onnx` is generated before image build
+3. runs `python src/components/data_ingestion.py` as a preflight check for the training and export path
 4. logs into Azure Container Registry with registry credentials
 5. builds the container image
 6. smoke-tests the image by calling `/health` and posting a sample prediction request
@@ -692,6 +691,7 @@ Check:
 - the running container can start correctly on the configured port
 
 If needed, regenerate artifacts before building the image and redeploy the container.
+If you are building from a clean checkout, rerun the Docker build or regenerate artifacts with `python src\components\data_ingestion.py` before rebuilding.
 
 ### Docker container exits immediately
 

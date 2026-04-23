@@ -6,10 +6,12 @@
 venv
 ENV
 env
+artifacts/
 __pycache__/
 *.py[cod]
 logs/
 catboost_info/
 notebook/catboost_info/
 notebook/*.ipynb
+mlproject.egg-info/
 *.log
