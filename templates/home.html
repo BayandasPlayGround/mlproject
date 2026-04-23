@@ -4,31 +4,12 @@
 
 {% block head %}
     <style>
-        :root {
-            --ink: #11231d;
-            --forest: #1d4c3b;
-            --forest-soft: #2c6a53;
-            --sand: #f7f2e8;
-            --mint: #dcecdf;
-            --salmon: #f3d6c3;
-            --panel: rgba(255, 255, 255, 0.82);
-            --border: rgba(17, 35, 29, 0.1);
-            --shadow: 0 26px 60px rgba(17, 35, 29, 0.18);
-        }
-
         * {
             box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            min-height: 100vh;
             font-family: Georgia, "Times New Roman", serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at top right, rgba(29, 76, 59, 0.18), transparent 28%),
-                radial-gradient(circle at bottom left, rgba(217, 130, 43, 0.16), transparent 24%),
-                linear-gradient(135deg, #f1f6f1 0%, var(--sand) 50%, #e4f1e8 100%);
         }
 
         .page {
@@ -41,6 +22,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
             margin-bottom: 22px;
         }
 
@@ -60,7 +42,9 @@
         .topbar-actions {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 16px;
+            justify-content: flex-end;
         }
 
         .layout {
@@ -136,27 +120,27 @@
         select {
             width: 100%;
             padding: 13px 14px;
-            border: 1px solid rgba(17, 35, 29, 0.12);
+            border: 1px solid var(--border);
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--field-bg);
             color: var(--ink);
             font: inherit;
         }
 
         input:focus,
         select:focus {
-            outline: 2px solid rgba(29, 76, 59, 0.18);
+            outline: 2px solid var(--focus);
             border-color: var(--forest-soft);
         }
 
         .input-error {
-            border-color: #b14c2f;
-            background: rgba(255, 246, 242, 0.98);
+            border-color: var(--error-border);
+            background: var(--field-error-bg);
         }
 
         .field-error {
             margin: 0;
-            color: #9a3f27;
+            color: var(--error-text);
             font-size: 0.88rem;
             line-height: 1.4;
         }
@@ -171,7 +155,7 @@
             border: 0;
             border-radius: 999px;
             background: linear-gradient(135deg, var(--forest), var(--forest-soft));
-            color: white;
+            color: var(--button-text);
             font: inherit;
             font-weight: 700;
             cursor: pointer;
@@ -180,15 +164,15 @@
 
         .submit-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 16px 34px rgba(29, 76, 59, 0.2);
+            box-shadow: var(--hover-shadow);
         }
 
         .exit-button {
             padding: 12px 18px;
             border: 0;
             border-radius: 999px;
-            background: linear-gradient(135deg, #9a3f27, #c25b3b);
-            color: white;
+            background: linear-gradient(135deg, var(--danger), var(--danger-soft));
+            color: var(--danger-text);
             font: inherit;
             font-weight: 700;
             cursor: pointer;
@@ -203,15 +187,15 @@
         }
 
         .result-card {
-            background: linear-gradient(180deg, rgba(220, 236, 223, 0.95), rgba(255, 255, 255, 0.9));
+            background: var(--result-gradient);
         }
 
         .hint-card {
-            background: rgba(255, 255, 255, 0.88);
+            background: var(--card);
         }
 
         .error-card {
-            background: rgba(243, 214, 195, 0.82);
+            background: var(--error-bg);
         }
 
         .error-list {
@@ -246,6 +230,22 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
+
+            .topbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .topbar-actions {
+                align-items: stretch;
+                justify-content: stretch;
+            }
+
+            .back-link,
+            .topbar-actions form,
+            .exit-button {
+                width: 100%;
+            }
         }
     </style>
 {% endblock %}
@@ -255,6 +255,7 @@
         <div class="topbar">
             <div class="brand">Student Score Predictor</div>
             <div class="topbar-actions">
+                {% include "_theme_switcher.html" %}
                 <a class="back-link" href="{{ url_for('index') }}">Back to landing page</a>
                 {% if allow_shutdown %}
                 <form action="{{ url_for('shutdown') }}" method="post" onsubmit="return confirm('Shut down the application?');">

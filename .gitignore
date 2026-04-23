@@ -1,142 +1,80 @@
-# Byte-compiled / optimized / DLL files
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
 .python-version
 
-# celery beat schedule file
-celerybeat-schedule
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.artifacts/
-.artifacts
-.env
-.venv
-env/
-env39/
-env311/
+# Virtual environments
+.venv/
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# Packaging and build output
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+MANIFEST
 
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
+# Test, coverage, and type-checking output
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.tox/
+.hypothesis/
+coverage.xml
+*.cover
 
-# pycharm
-.idea/
+# Flask and local runtime state
+instance/
+.webassets-cache
+*.log
+logs/
 
-# datafiles
-packages/regression_model/regression_model/datasets/*.csv
-packages/regression_model/regression_model/datasets/*.zip
-packages/regression_model/regression_model/datasets/*.txt
+# Environment and secrets
+.env
+.env.*
+!.env.example
+kaggle.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML training outputs
+catboost_info/
+notebook/catboost_info/
+artifacts/train.csv
+artifacts/test.csv
+artifacts/*.pkl
+artifacts/*.joblib
+artifacts/*.sav
+artifacts/*.onnx
+artifacts/*.h5
+artifacts/*.keras
+*.pkl
+*.joblib
+*.sav
+*.onnx
+*.h5
+*.keras
+
+# Local data drops
 train.csv
 test.csv
 raw.csv
-data_description.txt
-house-prices-advanced-regression-techniques.zip
 sample_submission.csv
 test_data_predictions.csv
-v2-plant-seedlings-dataset/
-v2-plant-seedlings-dataset.zip
+*.zip
 
-# all logs
-logs/
-
-# trained models (will be created in CI)
-section-05-production-model-package/regression_model/trained_models/*.pkl
-packages/regression_model/regression_model/trained_models/*.pkl
-packages/neural_network_model/neural_network_model/trained_models/*.pkl
-packages/neural_network_model/neural_network_model/trained_models/*.h5
-*.h5
-packages/neural_network_model/neural_network_model/datasets/training_data_reference.txt
-*.pkl
-
+# OS and editor files
 .DS_Store
-
-kaggle.json
-packages/ml_api/uploads/*
+Thumbs.db
+.idea/
+.vscode/

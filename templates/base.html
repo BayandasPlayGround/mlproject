@@ -1,12 +1,271 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" data-theme-choice="system">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>{% block title %}Student Score Predictor{% endblock %}</title>
+    <script>
+        (function () {
+            var storageKey = "student-score-theme";
+            var root = document.documentElement;
+            var savedTheme = null;
+
+            try {
+                savedTheme = window.localStorage.getItem(storageKey);
+            } catch (error) {
+                savedTheme = null;
+            }
+
+            var choice = savedTheme === "light" || savedTheme === "dark" ? savedTheme : "system";
+            var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            var resolvedTheme = choice === "system" ? (prefersDark ? "dark" : "light") : choice;
+
+            root.dataset.themeChoice = choice;
+            root.dataset.theme = resolvedTheme;
+            root.style.colorScheme = resolvedTheme;
+        })();
+    </script>
+    <style>
+        :root {
+            color-scheme: light;
+            --text: #10231c;
+            --text-muted: rgba(16, 35, 28, 0.76);
+            --primary: #1c4f3b;
+            --primary-soft: #2c6c53;
+            --accent: #d9822b;
+            --page-background:
+                radial-gradient(circle at top left, rgba(217, 130, 43, 0.24), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(28, 79, 59, 0.15), transparent 28%),
+                linear-gradient(135deg, #eef4ee 0%, #f7f2e8 50%, #e4efe8 100%);
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: rgba(255, 255, 255, 0.96);
+            --card: rgba(255, 255, 255, 0.88);
+            --card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(214, 234, 223, 0.55));
+            --result-gradient: linear-gradient(180deg, rgba(220, 236, 223, 0.95), rgba(255, 255, 255, 0.9));
+            --border: rgba(16, 35, 28, 0.1);
+            --border-strong: rgba(28, 79, 59, 0.18);
+            --shadow: 0 24px 60px rgba(16, 35, 28, 0.18);
+            --hover-shadow: 0 14px 30px rgba(28, 79, 59, 0.16);
+            --focus: rgba(29, 76, 59, 0.2);
+            --eyebrow-bg: #d6eadf;
+            --eyebrow-text: var(--primary);
+            --field-bg: rgba(255, 255, 255, 0.95);
+            --field-error-bg: rgba(255, 246, 242, 0.98);
+            --error-bg: rgba(243, 214, 195, 0.82);
+            --error-text: #9a3f27;
+            --error-border: #b14c2f;
+            --button-text: #ffffff;
+            --danger: #9a3f27;
+            --danger-soft: #c25b3b;
+            --danger-text: #ffffff;
+            --secondary-button-bg: #ffffff;
+            --secondary-button-text: var(--primary);
+            --theme-track: rgba(255, 255, 255, 0.74);
+            --theme-active-bg: var(--text);
+            --theme-active-text: #ffffff;
+
+            --ink: var(--text);
+            --forest: var(--primary);
+            --forest-soft: var(--primary-soft);
+            --sand: #f7f2e8;
+            --mint: var(--eyebrow-bg);
+            --salmon: #f3d6c3;
+            --paper: #f7f2e8;
+        }
+
+        html[data-theme="dark"] {
+            color-scheme: dark;
+            --text: #eaf5ee;
+            --text-muted: rgba(234, 245, 238, 0.76);
+            --primary: #8bd7b8;
+            --primary-soft: #55bb8b;
+            --accent: #f0ad62;
+            --page-background:
+                radial-gradient(circle at top left, rgba(240, 173, 98, 0.16), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(85, 187, 139, 0.16), transparent 30%),
+                linear-gradient(135deg, #0d1512 0%, #121d18 52%, #17221d 100%);
+            --panel: rgba(18, 29, 25, 0.88);
+            --panel-strong: rgba(23, 36, 31, 0.96);
+            --card: rgba(23, 36, 31, 0.88);
+            --card-gradient: linear-gradient(180deg, rgba(31, 51, 43, 0.96), rgba(18, 29, 25, 0.92));
+            --result-gradient: linear-gradient(180deg, rgba(31, 72, 57, 0.92), rgba(18, 29, 25, 0.94));
+            --border: rgba(205, 237, 222, 0.16);
+            --border-strong: rgba(139, 215, 184, 0.34);
+            --shadow: 0 26px 60px rgba(0, 0, 0, 0.44);
+            --hover-shadow: 0 16px 34px rgba(0, 0, 0, 0.32);
+            --focus: rgba(139, 215, 184, 0.34);
+            --eyebrow-bg: rgba(139, 215, 184, 0.15);
+            --eyebrow-text: #a8e5c8;
+            --field-bg: rgba(8, 17, 14, 0.92);
+            --field-error-bg: rgba(53, 23, 18, 0.92);
+            --error-bg: rgba(83, 35, 29, 0.76);
+            --error-text: #ffbea8;
+            --error-border: #f08d70;
+            --button-text: #06120d;
+            --danger: #ff8a67;
+            --danger-soft: #d76245;
+            --danger-text: #180905;
+            --secondary-button-bg: rgba(234, 245, 238, 0.08);
+            --secondary-button-text: #eaf5ee;
+            --theme-track: rgba(8, 17, 14, 0.72);
+            --theme-active-bg: #eaf5ee;
+            --theme-active-text: #08110e;
+
+            --ink: var(--text);
+            --forest: var(--primary);
+            --forest-soft: var(--primary-soft);
+            --sand: #121d18;
+            --mint: var(--eyebrow-bg);
+            --salmon: rgba(83, 35, 29, 0.76);
+            --paper: #121d18;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background: var(--page-background);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .theme-switcher {
+            display: inline-grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 2px;
+            padding: 3px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--theme-track);
+            box-shadow: 0 10px 24px rgba(16, 35, 28, 0.08);
+        }
+
+        .theme-switcher button {
+            min-height: 34px;
+            padding: 0 12px;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .theme-switcher button[aria-pressed="true"] {
+            background: var(--theme-active-bg);
+            color: var(--theme-active-text);
+            box-shadow: 0 8px 18px rgba(16, 35, 28, 0.14);
+        }
+
+        .theme-switcher button:focus-visible {
+            outline: 2px solid var(--focus);
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 520px) {
+            .theme-switcher {
+                width: 100%;
+            }
+
+            .theme-switcher button {
+                padding: 0 8px;
+            }
+        }
+    </style>
     {% block head %}{% endblock %}
 </head>
 <body>
     {% block content %}{% endblock %}
+    <script>
+        (function () {
+            var storageKey = "student-score-theme";
+            var validThemes = ["system", "light", "dark"];
+            var root = document.documentElement;
+            var mediaQuery = window.matchMedia
+                ? window.matchMedia("(prefers-color-scheme: dark)")
+                : { matches: false };
+            var currentChoice = root.dataset.themeChoice || "system";
+
+            function resolveTheme(choice) {
+                return choice === "system" ? (mediaQuery.matches ? "dark" : "light") : choice;
+            }
+
+            function persistChoice(choice) {
+                try {
+                    if (choice === "system") {
+                        window.localStorage.removeItem(storageKey);
+                    } else {
+                        window.localStorage.setItem(storageKey, choice);
+                    }
+                } catch (error) {
+                    return;
+                }
+            }
+
+            function updateButtons(choice) {
+                document.querySelectorAll("[data-theme-option]").forEach(function (button) {
+                    var isSelected = button.dataset.themeOption === choice;
+                    button.setAttribute("aria-pressed", String(isSelected));
+                });
+            }
+
+            function applyTheme(choice, shouldPersist) {
+                if (validThemes.indexOf(choice) === -1) {
+                    choice = "system";
+                }
+
+                currentChoice = choice;
+                var resolvedTheme = resolveTheme(choice);
+                root.dataset.themeChoice = choice;
+                root.dataset.theme = resolvedTheme;
+                root.style.colorScheme = resolvedTheme;
+                updateButtons(choice);
+
+                if (shouldPersist) {
+                    persistChoice(choice);
+                }
+            }
+
+            document.querySelectorAll("[data-theme-option]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    applyTheme(button.dataset.themeOption, true);
+                });
+            });
+
+            if (mediaQuery.addEventListener) {
+                mediaQuery.addEventListener("change", function () {
+                    if (currentChoice === "system") {
+                        applyTheme("system", false);
+                    }
+                });
+            } else if (mediaQuery.addListener) {
+                mediaQuery.addListener(function () {
+                    if (currentChoice === "system") {
+                        applyTheme("system", false);
+                    }
+                });
+            }
+
+            applyTheme(currentChoice, false);
+        })();
+    </script>
 </body>
 </html>
