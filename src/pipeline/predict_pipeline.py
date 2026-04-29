@@ -69,12 +69,10 @@ def ensure_prediction_artifacts(runtime=None):
         logging.info("Prediction artifacts not found. Regenerating them in the active environment.")
 
         from src.components.data_ingestion import DataIngestion
-        from src.components.data_transformation import DataTransformation
         from src.components.model_trainer import ModelTrainer
 
         train_path, test_path = DataIngestion().initiate_data_ingestion()
-        train_arr, test_arr, _ = DataTransformation().initiate_data_transformation(train_path, test_path)
-        score = ModelTrainer().initiate_model_trainer(train_arr, test_arr)
+        score = ModelTrainer().initiate_model_trainer(train_path, test_path)
         logging.info("Prediction artifacts regenerated successfully. Test R2 score: %.4f", score)
 
 
