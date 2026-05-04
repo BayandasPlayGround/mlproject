@@ -431,6 +431,12 @@ Stop it later with:
 docker stop student-score-app
 ```
 
+## Project Learnings
+
+This project's biggest modeling lesson is that a strong tabular ML result depends as much on a clean, repeatable feature pipeline as it does on the final estimator. Predicting `math_score` from reading score, writing score, and student profile fields required one shared schema across ingestion, transformation, training, ONNX export, and inference. The model selection report also showed that more complex models were not automatically better for this dataset: regularized linear models and Linear SVR stayed highly competitive, so cross-validation, preprocessing choices, residual diagnostics, and honest test metrics mattered more than simply adding heavier algorithms.
+
+The second major lesson is operational: a model is not ready for use just because it performs well in a notebook. This project had to turn experimentation into a deployable prediction service by saving versioned artifacts, exporting the preprocessing-plus-model pipeline to ONNX, keeping pickle only as a fallback, validating form inputs before prediction, exposing a `/health` endpoint, and separating training dependencies from the lightweight runtime container. That work exposed practical production concerns: keep the serving schema explicit, make missing artifacts fail clearly in deployed environments, avoid relying on notebook state, use metadata to explain what is running, and treat predictions about student performance as decision-support estimates rather than absolute judgments.
+
 ## Deployment Learnings
 
 The changes that mattered most for reliable cloud deployment were:
